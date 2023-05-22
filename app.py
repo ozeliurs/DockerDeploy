@@ -25,7 +25,7 @@ except Exception as e:
 
 @app.get('/')
 def index():
-    return [f"<a href=\"/{log}\">{log}</a>" for log in logs.iterdir() if log.is_file() and log.suffix == '.log']
+    return "<br>".join([f"<a href=\"/{log}\">{log}</a>" for log in logs.iterdir() if log.is_file() and log.suffix == '.log'])
 
 
 @app.get('/<run_identifier>')
