@@ -28,7 +28,7 @@ def index():
     return "<br>".join([f"<a href=\"/{log}\">{log}</a>" for log in logs.iterdir() if log.is_file() and log.suffix == '.log'])
 
 
-@app.get('/<run_identifier>')
+@app.get('/logs/<run_identifier>')
 def get_log(run_identifier):
     if not (logs / f'{run_identifier}').is_file():
         return f"Log {run_identifier} not found"
