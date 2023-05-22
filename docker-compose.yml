@@ -12,6 +12,8 @@ services:
       - "traefik.http.routers.docker-deploy.entrypoints=websecure"
       - "traefik.http.routers.docker-deploy.tls.certresolver=cloudlfare"
       - "traefik.http.routers.docker-deploy.tls=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   traefik:
