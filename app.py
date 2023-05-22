@@ -34,16 +34,11 @@ def webhook():
         return 'No action required'
 
     image_url = request.json['package']['package_version']['package_url']
-    image_tag = image_url.split('/')[-1].split(':')[1]
     image_url = image_url.split(':')[0]
     identifier = image_url.split('/')[-1].replace(':', '_')
     run_identifier = str(uuid.uuid4())
 
-    log(f"Received request for {image_url}:{image_tag}", run_identifier)
-
-    # Pull the image
-    log(f"Pulling image {image_url}", run_identifier)
-    image = docker_client.images.pull(image_url.split(':')[0], image_tag)
+    log(f"Received request for {image_url}", run_identifier)
 
     # If the container already exists, remove it
     container = docker_client.containers.get(identifier)
@@ -54,7 +49,7 @@ def webhook():
     # Run the image
     log(f"Running image {image_url}", run_identifier)
     container = docker_client.containers.run(
-        image,
+        image=image_url,
         name=uuid.uuid4(),
         detach=True,
         restart_policy={'Name': 'unless-stopped'},
