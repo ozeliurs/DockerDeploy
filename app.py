@@ -20,11 +20,13 @@ def webhook():
     if 'action' not in request.json or request.json['action'] not in ['published', 'updated']:
         return 'No action required'
 
-    Path('debug.txt').write_text(json.dumps(request.json))
+    image_url = request.json['package']['package_version']['package_url']
+    image_name = image_url.split('/')[-1].split(':')[0]
+    image_tag = image_url.split('/')[-1].split(':')[1]
 
-    # docker_client.images.pull(docker_image)
+    print(f"Received package {image_name}:{image_tag} at {image_url}")
 
-    return 'Hello World!'
+    return 'OK'
 
 
 if __name__ == '__main__':
