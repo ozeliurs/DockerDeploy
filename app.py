@@ -1,6 +1,7 @@
 import uuid
 from pathlib import Path
 
+from docker.errors import NotFound
 from flask import Flask, request
 
 from docker import DockerClient
@@ -61,7 +62,11 @@ def webhook():
     log(f"Received request for {image_url}", run_identifier)
 
     # If the container already exists, remove it
-    container = docker_client.containers.get(identifier)
+    try:
+        container = docker_client.containers.get(identifier)
+    except NotFound:
+        container = None
+
     if container:
         log(f"Removing container {identifier}", run_identifier)
         container.remove(force=True)
