@@ -13,11 +13,11 @@ app = Flask(__name__)
 @app.post('/')
 def webhook():
     # Check if the request is an event
-    if 'X-GitHub-Event' not in request.headers and request.headers['X-GitHub-Event'] != 'package':
+    if 'X-GitHub-Event' not in request.headers or request.headers['X-GitHub-Event'] != 'package':
         return 'No package event'
 
     # Check if the action is related to a package been published or updated
-    if 'action' not in request.json and request.json['action'] not in ['published', 'updated']:
+    if 'action' not in request.json or request.json['action'] not in ['published', 'updated']:
         return 'No action required'
 
     Path('debug.txt').write_text(json.dumps(request.json))
