@@ -26,22 +26,18 @@ except Exception as e:
 
 @app.get('/')
 def index():
-    return "<br>".join([f"<a href=\"/{log}\">{log}</a>" for log in logs.iterdir() if log.is_file() and log.suffix == '.log'])
+    log_list = logs.glob('*.log')
+    log_list = sorted(log_list, key=lambda x: x.stat().st_mtime, reverse=True)
+    log_list = [log.stem for log in log_list if log.is_file()]
+    return "<br>".join([f"<a href=\"/{log}\">{log}</a>" for log in log_list])
 
 
-@app.get('/logs/<run_identifier>')
+@app.get('/<run_identifier>')
 def get_log(run_identifier):
-    if not (logs / f'{run_identifier}').is_file():
+    if not (logs / f'{run_identifier}.log').is_file():
         return f"Log {run_identifier} not found"
 
-    if not run_identifier.endswith('.log'):
-        return f"Invalid log {run_identifier}"
-
-    try:
-        with open(logs / f'{run_identifier}.log', 'r') as f:
-            return f.read()
-    except Exception as e:
-        return f"Failed to read log: {e}"
+    return f"<pre>{Path(logs / f'{run_identifier}.log').read_text()}</pre>"
 
 
 @app.post('/')
