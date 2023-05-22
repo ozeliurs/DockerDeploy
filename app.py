@@ -1,4 +1,4 @@
-import json
+import uuid
 from pathlib import Path
 
 from flask import Flask, request
@@ -7,7 +7,20 @@ from docker import DockerClient
 
 app = Flask(__name__)
 
-# docker_client = DockerClient(base_url='unix://var/run/docker.sock')
+logs = Path('logs')
+logs.mkdir(exist_ok=True)
+
+
+def log(message, run_identifier):
+    with open(logs / f'{run_identifier}.log', 'a') as f:
+        f.write(f'{message}\n')
+
+
+try:
+    docker_client = DockerClient(base_url='unix://var/run/docker.sock')
+except Exception as e:
+    print(f"Failed to connect to the Docker daemon: {e}")
+    exit(1)
 
 
 @app.post('/')
@@ -21,11 +34,46 @@ def webhook():
         return 'No action required'
 
     image_url = request.json['package']['package_version']['package_url']
-    image_name = image_url.split('/')[-1].split(':')[0]
     image_tag = image_url.split('/')[-1].split(':')[1]
+    image_url = image_url.split(':')[0]
+    identifier = image_url.split('/')[-1].replace(':', '_')
+    run_identifier = str(uuid.uuid4())
 
-    print(f"Received package {image_name}:{image_tag} at {image_url}")
+    log(f"Received request for {image_url}:{image_tag}", run_identifier)
 
+    # Pull the image
+    log(f"Pulling image {image_url}", run_identifier)
+    image = docker_client.images.pull(image_url.split(':')[0], image_tag)
+
+    # If the container already exists, remove it
+    container = docker_client.containers.get(identifier)
+    if container:
+        log(f"Removing container {identifier}", run_identifier)
+        container.remove(force=True)
+
+    # Run the image
+    log(f"Running image {image_url}", run_identifier)
+    container = docker_client.containers.run(
+        image,
+        name=uuid.uuid4(),
+        detach=True,
+        restart_policy={'Name': 'unless-stopped'},
+        networks=['traefik'],
+        labels={
+            'traefik.enable': 'true',
+            f"traefik.http.routers.{identifier}.rule": f'Host(`{identifier}.dd.ozeliurs.com`)',
+            f"traefik.http.routers.{identifier}.entrypoints": 'websecure',
+            f"traefik.http.routers.{identifier}.tls.certresolver": 'letsencrypt',
+            'traefik.http.routers.docker-deploy.tls': 'true'
+        }
+    )
+
+    if not container:
+        log(f"Failed to run image {image_url}", run_identifier)
+        return 'NOK'
+
+    log(f"Successfully ran image {image_url}", run_identifier)
+    log(f"Available at https://{identifier}.dd.ozeliurs.com", run_identifier)
     return 'OK'
 
 
