@@ -117,6 +117,10 @@ def webhook():
         log(f"Failed to run image {image_url}", run_identifier)
         return 'NOK'
 
+    if container.startswith('dd_backend-api'):
+        log(f"Migration for {identifier}", run_identifier)
+        container.exec_run('prisma migrate deploy')
+
     log(f"Successfully ran image {image_url}", run_identifier)
     log(f"Available at https://{identifier}.dd.ozeliurs.com", run_identifier)
     return 'OK'
