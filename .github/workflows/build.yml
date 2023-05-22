@@ -1,0 +1,17 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build -t ghcr.io/ozeliurs/dockerdeploy:latest .
+    - name: Login to the github registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+    - name: Push the Docker image to the github registry
+      run: docker push ghcr.io/ozeliurs/dockerdeploy:latest
