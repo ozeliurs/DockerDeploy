@@ -30,7 +30,7 @@ def index():
 
 @app.get('/<run_identifier>')
 def get_log(run_identifier):
-    if not (logs / f'{run_identifier}.log').is_file():
+    if not (logs / f'{run_identifier}').is_file():
         return f"Log {run_identifier} not found"
 
     if not run_identifier.endswith('.log'):
