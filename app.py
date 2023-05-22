@@ -1,10 +1,9 @@
 import uuid
 from pathlib import Path
 
+from docker import DockerClient
 from docker.errors import NotFound
 from flask import Flask, request
-
-from docker import DockerClient
 
 app = Flask(__name__)
 
@@ -66,7 +65,7 @@ def webhook():
         log(f"Removing container {identifier}", run_identifier)
         container.remove(force=True)
 
-    if identifier.startswith('backend-api'):
+    if identifier.startswith('dd_backend-api'):
         try:
             container = docker_client.containers.get(f'{identifier}_db')
         except NotFound:
@@ -79,7 +78,7 @@ def webhook():
         log(f"Running database for {identifier}", run_identifier)
         container = docker_client.containers.run(
             image='postgres:13',
-            name=f'{identifier}_db',
+            name=f'dd_{identifier}_db',
             detach=True,
             restart_policy={'Name': 'unless-stopped'},
             network='traefik',
@@ -97,11 +96,10 @@ def webhook():
             "HOST": "0.0.0.0"
         }
 
-
     log(f"Running image {image_url}", run_identifier)
     container = docker_client.containers.run(
         image=image_url,
-        name=uuid.uuid4(),
+        name=f"dd_{identifier}",
         detach=True,
         restart_policy={'Name': 'unless-stopped'},
         network='traefik',
