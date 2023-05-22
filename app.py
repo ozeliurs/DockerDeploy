@@ -73,7 +73,7 @@ def webhook():
         name=uuid.uuid4(),
         detach=True,
         restart_policy={'Name': 'unless-stopped'},
-        networks=['traefik'],
+        network='traefik',
         labels={
             'traefik.enable': 'true',
             f"traefik.http.routers.{identifier}.rule": f'Host(`{identifier}.dd.ozeliurs.com`)',
