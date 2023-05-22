@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  docker-deploy:
+    image: ghcr.io/ozeliurs/dockerdeploy:latest
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docker-deploy.rule=Host(`dockerdeploy.ozeliurs.com`)"
+      - "traefik.http.routers.docker-deploy.entrypoints=websecure"
+      - "traefik.http.routers.docker-deploy.tls.certresolver=cloudlfare"
+      - "traefik.http.routers.docker-deploy.tls=true"
+
+networks:
+  traefik:
+    external: true
