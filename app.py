@@ -23,6 +23,26 @@ except Exception as e:
     exit(1)
 
 
+@app.get('/')
+def index():
+    return [f"<a href=\"/{log}\">{log}</a>" for log in logs.iterdir() if log.is_file() and log.suffix == '.log']
+
+
+@app.get('/<run_identifier>')
+def get_log(run_identifier):
+    if not (logs / f'{run_identifier}.log').is_file():
+        return f"Log {run_identifier} not found"
+
+    if not run_identifier.endswith('.log'):
+        return f"Invalid log {run_identifier}"
+
+    try:
+        with open(logs / f'{run_identifier}.log', 'r') as f:
+            return f.read()
+    except Exception as e:
+        return f"Failed to read log: {e}"
+
+
 @app.post('/')
 def webhook():
     # Check if the request is an event
