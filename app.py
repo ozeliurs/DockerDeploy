@@ -66,7 +66,38 @@ def webhook():
         log(f"Removing container {identifier}", run_identifier)
         container.remove(force=True)
 
-    # Run the image
+    if identifier.startswith('backend-api'):
+        try:
+            container = docker_client.containers.get(f'{identifier}_db')
+        except NotFound:
+            container = None
+
+        if container:
+            log(f"Removing container {identifier}_db", run_identifier)
+            container.remove(force=True)
+
+        log(f"Running database for {identifier}", run_identifier)
+        container = docker_client.containers.run(
+            image='postgres:13',
+            name=f'{identifier}_db',
+            detach=True,
+            restart_policy={'Name': 'unless-stopped'},
+            network='traefik',
+            labels={
+                'traefik.enable': 'false',
+            }
+        )
+
+    env_vars = {}
+    if identifier.startswith('backend-api'):
+        env_vars = {
+            "DATABASE_URL": f"postgresql://postgres:postgres@{identifier}_db:5432/postgres",
+            "PORT": "3000",
+            "NODE_ENV": "production",
+            "HOST": "0.0.0.0"
+        }
+
+
     log(f"Running image {image_url}", run_identifier)
     container = docker_client.containers.run(
         image=image_url,
@@ -80,7 +111,8 @@ def webhook():
             f"traefik.http.routers.{identifier}.entrypoints": 'websecure',
             f"traefik.http.routers.{identifier}.tls.certresolver": 'letsencrypt',
             'traefik.http.routers.docker-deploy.tls': 'true'
-        }
+        },
+        environment=env_vars
     )
 
     if not container:
