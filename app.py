@@ -55,7 +55,6 @@ def webhook():
         return 'No action required'
 
     image_url = request.json['package']['package_version']['package_url']
-    image_url = image_url.split(':')[0]
     identifier = image_url.split('/')[-1].replace(':', '_')
     run_identifier = str(uuid.uuid4())
 
